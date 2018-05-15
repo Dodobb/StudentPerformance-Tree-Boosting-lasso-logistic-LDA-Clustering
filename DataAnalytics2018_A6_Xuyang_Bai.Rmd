@@ -1,0 +1,485 @@
+---
+title: "A6"
+author: "Xuyang Bai"
+date: "4/11/2018"
+output: pdf_document
+---
+General assignment: Your term projects should fall within the scope of a data analytics problem of the type you have worked with in class/ labs, or know of yourself the bigger the data the better. This means that the work must go beyond just making lots of figures. You should develop the project to indicate you are thinking of and exploring the relationships and distributions within your data to lead to optimized predictive models. Start with a hypothesis, claim, or questions. Think of one or more ways to construct model(s)1, find or collect the necessary data, and do both preliminary analysis, detailed modeling, validation, summary (interpretation) and (if any) resulting decisions.
+Note: You do not have to come up with a positive result, i.e. disproving the hypothesis is just as good. Please use the section numbering below for your written submission for this assignment.
+Guidance: Topics, scope and general nature ??? please use the opportunity in Assignment 5 (project proposals) and seek feedback from the instructor and your classmates.
+1. Introduction (2%)
+Describe your motivation, initial hypothesis/ idea that you wanted to investigate, and if applicable any prior work, interest in the topic (like an intro for a paper, with references). Min. 1/2 page.
+
+2. Data Description (3%)
+Describe how you determined which datasets you used in this project, the criteria, source, data and information-types in detail, associatedumentation and any other supporting materials. Min. 1/2 page text (+graphics if applicable).
+
+
+3. Analysis (5%)
+Explore the statistical aspects of your datasets. Perform any transformations, interpolations, smoothing, cleaning, etc. required on the data, to begin to explore your hypothesis/ questions. Analyze the distributions; provide summaries of the relevant statistics and plots of any fits you made. Discuss and specify or estimate possible sources of error, uncertainty or bias in the data you used (or did not use). Min. 2 pages text + graphics.
+```{r}
+library(readr)
+portuguese <- read_csv("~/Desktop/DataAnalytics/A6/student-por.csv")
+math <- read_csv("~/Desktop/DataAnalytics/A6/student-mat (1).csv")
+#For port: Grade 1 and Grade 2 are very similiar, but mean of Grade 3 is much higher than 1 and 2
+par(mfrow=c(1,3))
+boxplot(portuguese$G1, xlab="Grade 1")
+boxplot(portuguese$G2, xlab="Grade 2")
+boxplot(portuguese$G3,xlab="Grade 3")
+#For math: all three grades are different
+par(mfrow=c(1,3))
+boxplot(math$G1, xlab="Grade 1")
+boxplot(math$G2, xlab="Grade 2")
+boxplot(math$G3,xlab="Grade 3")
+#No NA
+sum(is.na(portuguese))
+sum(is.na(math))
+#A lot of categorical variables and numeric variables
+summary(portuguese)
+#No clear pattern for three grades
+par(mfrow=c(2,3))
+plot(portuguese$G1, xlab="Grade 1, Port")
+plot(portuguese$G2, xlab="Grade 2, Port")
+plot(portuguese$G3, xlab="Grade 3, Port")
+plot(math$G1, xlab="Grade 1, Math")
+plot(math$G2, xlab="Grade 2, Math")
+plot(math$G3, xlab="Grade 3, Math")
+#Port: More students increase their performance from 2nd test to 3rd test than from 2nd test to 1st test.
+portuguese$PDiff1=(portuguese$G2-portuguese$G1)/portuguese$G1
+portuguese$PDiff2=(portuguese$G3-portuguese$G2)/portuguese$G2
+par(mfrow=c(1,2))
+plot(portuguese$PDiff1)
+plot(portuguese$PDiff2)
+#Math: 
+math$MDiff1=(math$G2-math$G1)/math$G1
+math$MDiff2=(math$G3-math$G2)/math$G2
+par(mfrow=c(1,2))
+plot(math$MDiff1)
+plot(math$MDiff2)
+#Port
+PBest<-portuguese[which(portuguese$PDiff1>0 & portuguese$PDiff2>0),]
+PWorst<-portuguese[which(portuguese$PDiff1<0 & portuguese$PDiff2<0),]
+PInDe<-portuguese[which(portuguese$PDiff1>0 & portuguese$PDiff2<=0),]
+PDeIn<-portuguese[which(portuguese$PDiff1<=0 & portuguese$PDiff2>0),]
+PStable<-portuguese[which(portuguese$PDiff1==0 & portuguese$PDiff2==0),]
+
+
+#Data Exploration
+library(ggplot2)
+
+#port
+#Worst group has very few observations.
+#Address is an important predictor. More students from rural area in worst group than in other group. Maybe the rural condition is not supportive for study. 
+par(mfrow=c(2,3))
+ggplot(MWorst, aes(x =address)) + geom_bar(aes(fill = sex))+xlab("Worst")
+ggplot(MBest, aes(x =address)) + geom_bar(aes(fill = sex))+xlab("Best")
+ggplot(MInDe, aes(x =address)) + geom_bar(aes(fill = sex))+xlab("Inde")
+ggplot(MDeIn, aes(x =address)) + geom_bar(aes(fill = sex))+xlab("Dein")
+ggplot(MStable, aes(x =address)) + geom_bar(aes(fill = sex))+xlab("Stable")
+
+#Goout is very important predictor. Worst group student go out more with friends than students in other groups. Maybe this is one reason that they are in the worst group.
+ggplot(PWorst, aes(x =goout)) + geom_bar()+xlab("Worst")
+ggplot(PBest, aes(x =goout)) + geom_bar()+xlab("Best")
+ggplot(PInDe, aes(x =goout)) + geom_bar(aes(fill = sex))+xlab("Inde")
+ggplot(PDeIn, aes(x =goout)) + geom_bar(aes(fill = sex))+xlab("Dein")
+ggplot(PStable, aes(x =goout)) + geom_bar(aes(fill = sex))+xlab("Stable")
+
+#Medu and Fedu are slightly important. THe mom has lower edu for Worst group students
+ggplot(PWorst, aes(x =Medu)) + geom_bar()+xlab("Worst")
+ggplot(PBest, aes(x =Medu)) + geom_bar()+xlab("Best")
+ggplot(PInDe, aes(x =Medu)) + geom_bar()+xlab("Inde")
+ggplot(PDeIn, aes(x =Medu)) + geom_bar()+xlab("Dein")
+ggplot(PStable, aes(x =Medu)) + geom_bar()+xlab("Stable")
+ggplot(PWorst, aes(x =Fedu)) + geom_bar()+xlab("Worst")
+ggplot(PBest, aes(x =Fedu)) + geom_bar()+xlab("Best")
+ggplot(PInDe, aes(x =Fedu)) + geom_bar()+xlab("Inde")
+ggplot(PDeIn, aes(x =Fedu)) + geom_bar()+xlab("Dein")
+ggplot(PStable, aes(x =Fedu)) + geom_bar()+xlab("Stable")
+
+#Very few less than 3 famsize for worst group
+ggplot(PWorst, aes(x =famsize)) + geom_bar()+xlab("Worst")
+ggplot(PBest, aes(x =famsize)) + geom_bar()+xlab("Best")
+ggplot(PInDe, aes(x =famsize)) + geom_bar()+xlab("Inde")
+ggplot(PDeIn, aes(x =famsize)) + geom_bar()+xlab("Dein")
+ggplot(PStable, aes(x =famsize)) + geom_bar()+xlab("Stable")
+
+#guardian does not help much
+ggplot(PWorst, aes(x =guardian)) + geom_bar()+xlab("Worst")
+ggplot(PBest, aes(x =guardian)) + geom_bar()+xlab("Best")
+ggplot(PInDe, aes(x =guardian)) + geom_bar()+xlab("Inde")
+ggplot(PDeIn, aes(x =guardian)) + geom_bar()+xlab("Dein")
+ggplot(PStable, aes(x =guardian)) + geom_bar()+xlab("Stable")
+
+
+#activitties does not help
+ggplot(MWorst, aes(x =activities)) + geom_bar()+xlab("Worst")
+ggplot(MBest, aes(x =activities)) + geom_bar()+xlab("Best")
+ggplot(MInDe, aes(x =activities)) + geom_bar()+xlab("Inde")
+ggplot(MDeIn, aes(x =activities)) + geom_bar()+xlab("Dein")
+ggplot(MStable, aes(x =activities)) + geom_bar()+xlab("Stable")
+
+#traveltime does not help
+ggplot(PWorst, aes(x =traveltime)) + geom_bar()+xlab("Worst")
+ggplot(PBest, aes(x =traveltime)) + geom_bar()+xlab("Best")
+ggplot(PInDe, aes(x =traveltime)) + geom_bar()+xlab("Inde")
+ggplot(PDeIn, aes(x =traveltime)) + geom_bar()+xlab("Dein")
+ggplot(PStable, aes(x =traveltime)) + geom_bar()+xlab("Stable")
+
+#Paid Does not help much
+ggplot(PWorst, aes(x =paid)) + geom_bar()+xlab("Worst")
+ggplot(PBest, aes(x =paid)) + geom_bar()+xlab("Best")
+ggplot(PInDe, aes(x =paid)) + geom_bar()+xlab("Inde")
+ggplot(PDeIn, aes(x =paid)) + geom_bar()+xlab("Dein")
+ggplot(PStable, aes(x =paid)) + geom_bar()+xlab("Stable")
+
+#famrel Does not help much
+ggplot(PWorst, aes(x =famrel)) + geom_bar()+xlab("Worst")
+ggplot(PBest, aes(x =famrel)) + geom_bar()+xlab("Best")
+ggplot(PInDe, aes(x =famrel)) + geom_bar()+xlab("Inde")
+ggplot(PDeIn, aes(x =famrel)) + geom_bar()+xlab("Dein")
+ggplot(PStable, aes(x =famrel)) + geom_bar()+xlab("Stable")
+
+#Health slightly help 
+ggplot(PWorst, aes(x =health)) + geom_bar()+xlab("Worst")
+ggplot(PBest, aes(x =health)) + geom_bar()+xlab("Best")
+ggplot(PInDe, aes(x =health)) + geom_bar()+xlab("Inde")
+ggplot(PDeIn, aes(x =health)) + geom_bar()+xlab("Dein")
+ggplot(PStable, aes(x =health)) + geom_bar()+xlab("Stable")
+
+
+#Math
+MBest<-math[which(math$MDiff1>0 & math$MDiff2>0),]
+MWorst<-math[which(math$MDiff1<0 & math$MDiff2<0),]
+MInDe<-math[which(math$MDiff1>0 & math$MDiff2<=0),]
+MDeIn<-math[which(math$MDiff1<=0 & math$MDiff2>0),]
+MStable<-math[which(math$MDiff1==0 & math$MDiff2==0),]
+
+ggplot(MWorst, aes(x =romantic)) + geom_bar(aes(fill = sex))+xlab("Worst")
+ggplot(MBest, aes(x =romantic)) + geom_bar(aes(fill = sex))+xlab("Best")
+ggplot(MInDe, aes(x =romantic)) + geom_bar(aes(fill = sex))+xlab("Inde")
+ggplot(MDeIn, aes(x =romantic)) + geom_bar(aes(fill = sex))+xlab("Dein")
+ggplot(MStable, aes(x =romantic)) + geom_bar(aes(fill = sex))+xlab("Stable")
+
+ggplot(PWorst, aes(x =failures)) + geom_bar()+xlab("Worst")
+ggplot(PBest, aes(x =failures)) + geom_bar()+xlab("Best")
+ggplot(PInDe, aes(x =failures)) + geom_bar()+xlab("Inde")
+ggplot(PDeIn, aes(x =failures)) + geom_bar()+xlab("Dein")
+ggplot(PStable, aes(x =failures)) + geom_bar()+xlab("Stable")
+
+ggplot(PWorst, aes(x =studytime)) + geom_bar()+xlab("Worst")
+ggplot(PBest, aes(x =studytime)) + geom_bar()+xlab("Best")
+ggplot(PInDe, aes(x =studytime)) + geom_bar()+xlab("Inde")
+ggplot(PDeIn, aes(x =studytime)) + geom_bar()+xlab("Dein")
+ggplot(PStable, aes(x =studytime)) + geom_bar()+xlab("Stable")
+
+```
+4. Model Development and Application of model(s) (12%)
+Identify what types of models you used to describe the data (regression, classification, clustering, etc.), patterns/ trends you found, visual approaches that helped you choose models, and or variables (type/ number) in the model, other parameter choices or settings for the models (e.g. distance metrics, kernels, etc.). Apply the models to assess model performance (i.e. predict). Discuss the confidence in your results including any statistic measures. Discuss how you validated your models and performed any optimization (give details). Min. 6 pages text + graphics.
+```{r}
+#Port
+#Model 1, Logistic regression on to predict PDiff2
+#Data partition, get train and test set
+#set.seed(2)
+portuguese<-na.omit(portuguese)
+sum(is.na(portuguese))
+train.index <- sample(c(1:dim(portuguese)[1]), dim(portuguese)[1]*0.6)
+train.df <- portuguese[train.index, ]
+valid.df <- portuguese[-train.index, ]
+# run logistic regression
+portuguese$RealIn<-ifelse(portuguese$PDiff2>=0,1,0)
+summary(portuguese$RealIn)
+logit.reg <- glm(RealIn~as.factor(school)+as.factor(sex)+as.factor(address)+as.factor(famsize)+as.factor(Pstatus)+as.factor(Medu)+as.factor(Fedu)+as.factor(Mjob)+as.factor(Fjob)+as.factor(Pstatus)+as.factor(reason)+as.factor(guardian)+traveltime+studytime+failures+as.factor(schoolsup)+as.factor(famsup)+as.factor(paid)+as.factor(activities)+as.factor(nursery)+as.factor(higher)+as.factor(internet)+as.factor(romantic)+as.factor(famrel)+freetime+goout+Dalc+Walc+health+absences+G1+G2+PDiff1 ,data =train.df)
+summary(logit.reg)
+coef(logit.reg)
+ #delete romantic, paid, famrel, traveltime, activities, guardian, internet
+logit.reg <- glm(RealIn~as.factor(school)+as.factor(sex)+as.factor(address)+as.factor(famsize)+as.factor(Pstatus)+as.factor(Medu)+as.factor(Fedu)+as.factor(Mjob)+as.factor(Fjob)+as.factor(Pstatus)+as.factor(reason)+studytime+failures+as.factor(schoolsup)+as.factor(famsup)+as.factor(nursery)+as.factor(higher)+freetime+goout+Dalc+Walc+health+absences+G1+G2+PDiff1 ,data =train.df)
+summary(logit.reg)
+ #Only keep student's own condition 
+logit.reg <- glm(RealIn~studytime+failures+as.factor(nursery)+as.factor(higher)+freetime+goout+Dalc+Walc+health+absences+G1+G2+PDiff1 ,data =train.df)
+summary(logit.reg)
+ #Keep family condition
+logit.reg <- glm(RealIn~as.factor(address)+as.factor(famsize)+as.factor(Pstatus)+as.factor(Medu)+as.factor(Fedu)+as.factor(Mjob)+as.factor(Fjob)+as.factor(Pstatus)+as.factor(reason)+as.factor(schoolsup)+as.factor(famsup),data =train.df)
+summary(logit.reg)
+# use predict() with type = "response" to compute predicted probabilities.
+logit.reg.pred <- predict(logit.reg, valid.df, type = "response")
+summary(logit.reg.pred)
+# first 5 actual and predicted records
+data.frame(actual = valid.df$PDiff2[1:5], predicted = logit.reg.pred[1:5])
+#Start to improve the model by choosing the most related variable and make a simple model
+library(gains)
+gain <- gains(valid.df$PDiff2, logit.reg.pred, groups=length(logit.reg.pred))
+# plot lift chart
+plot(c(0,gain$cume.pct.of.total*sum(valid.df$PDiff2))~c(0,gain$cume.obs),
+xlab="# cases", ylab="Cumulative", main="", type="l")
+lines(c(0,sum(valid.df$PDiff2))~c(0, dim(valid.df)[1]), lty=2)
+# compute deciles and plot decile-wise chart
+heights <- gain$mean.resp/mean(valid.df$PDiff2)
+midpoints <- barplot(heights, names.arg = gain$depth, ylim = c(0,9),
+xlab = "Percentile", ylab = "Mean Response", main = "Decile-wise lift chart")
+# add labels to columns
+text(midpoints, heights+0.5, labels=round(heights, 1), cex = 0.8)
+
+#
+glm.pred=logit.reg.pred
+logit.reg.pred[logit.reg.pred>.5]="1"
+table(logit.reg.pred,valid.df$RealIn)
+print(confucianmatrix<-(0+222)/(222+35))
+```
+```{r}
+#Math
+#Step 1, Logistic regression on PBest to predict PDiff2
+#Model 1,
+math<-na.omit(math)
+sum(is.na(math))
+trainM.index <- sample(c(1:dim(math)[1]), dim(math)[1]*0.6)
+trainM.df <- math[trainM.index, ]
+validM.df <- math[-trainM.index, ]
+# run logistic regression
+math$RealIn<-ifelse(math$MDiff2>=0,1,0)
+summary(math$RealIn)
+logitM.reg <- glm(RealIn~as.factor(school)+as.factor(sex)+as.factor(address)+as.factor(famsize)+as.factor(Pstatus)+as.factor(Medu)+as.factor(Fedu)+as.factor(Mjob)+as.factor(Fjob)+as.factor(Pstatus)+as.factor(reason)+as.factor(guardian)+traveltime+studytime+failures+as.factor(schoolsup)+as.factor(famsup)+as.factor(paid)+as.factor(activities)+as.factor(nursery)+as.factor(higher)+as.factor(internet)+as.factor(romantic)+as.factor(famrel)+freetime+goout+Dalc+Walc+health+absences+G1+G2 ,data =trainM.df)
+summary(logitM.reg)
+coef(logitM.reg)
+# use predict() with type = "response" to compute predicted probabilities.
+logitM.reg.pred <- predict(logitM.reg, validM.df, type = "response")
+summary(logitM.reg.pred)
+# first 5 actual and predicted records
+data.frame(actual = validM.df$MDiff2[1:5], predicted = logitM.reg.pred[1:5])
+#Start to improve the model by choosing the most related variable and make a simple model
+library(gains)
+gain <- gains(validM.df$MDiff2, logitM.reg.pred, groups=length(logitM.reg.pred))
+# plot lift chart
+plot(c(0,gain$cume.pct.of.total*sum(validM.df$MDiff2))~c(0,gain$cume.obs),
+xlab="# cases", ylab="Cumulative", main="", type="l")
+lines(c(0,sum(validM.df$MDiff2))~c(0, dim(validM.df)[1]), lty=2)
+# compute deciles and plot decile-wise chart
+heights <- gain$mean.resp/mean(validM.df$MDiff2)
+midpoints <- barplot(heights, names.arg = gain$depth, ylim = c(0,9),
+xlab = "Percentile", ylab = "Mean Response", main = "Decile-wise lift chart")
+# add labels to columns
+text(midpoints, heights+0.5, labels=round(heights, 1), cex = 0.8)
+#
+glmM.pred=logitM.reg.pred
+logitM.reg.pred[logitM.reg.pred>0.5]="1"
+logitM.reg.pred[logitM.reg.pred<=0.5]="0"
+table(logitM.reg.pred,validM.df$RealIn)
+print(confucianmatrixM<-(6+96)/(23+28+6+96))
+print(A0<-(6/(6+23)))
+print(A1<-(96/(96+28)))
+```
+```{r}
+# Step 1 Use Linear Discriminant Analysis to predict PDiff2
+library(MASS)
+lda.fit=lda(RealIn~as.factor(school)+as.factor(sex)+as.factor(address)+as.factor(famsize)+as.factor(Pstatus)+as.factor(Medu)+as.factor(Fedu)+as.factor(Mjob)+as.factor(Fjob)+as.factor(Pstatus)+as.factor(reason)+as.factor(guardian)+traveltime+studytime+failures+as.factor(schoolsup)+as.factor(famsup)+as.factor(paid)+as.factor(activities)+as.factor(nursery)+as.factor(higher)+as.factor(internet)+as.factor(romantic)+as.factor(famrel)+freetime+goout+Dalc+Walc+health+absences+G1+G2+PDiff1 ,data=train.df)
+lda.fit
+plot(lda.fit)
+lda.pred=predict(lda.fit,valid.df )
+names(lda.pred)
+lda.class=lda.pred$class
+table(lda.class,valid.df$RealIn)
+print((2+212)/(33+9+2+212))
+print(A0<-(2/(2+9)))
+print(A1<-(212)/(33+212))
+```
+
+```{r}
+# Step 1 Use Linear Discriminant Analysis to predict PDiff2
+library(MASS)
+lda.fit=lda(RealIn~as.factor(school)+as.factor(sex)+as.factor(address)+as.factor(famsize)+as.factor(Pstatus)+as.factor(Medu)+as.factor(Fedu)+as.factor(Mjob)+as.factor(Fjob)+as.factor(Pstatus)+as.factor(reason)+as.factor(guardian)+traveltime+studytime+failures+as.factor(schoolsup)+as.factor(famsup)+as.factor(paid)+as.factor(activities)+as.factor(nursery)+as.factor(higher)+as.factor(internet)+as.factor(romantic)+as.factor(famrel)+freetime+goout+Dalc+Walc+health+absences+G1+G2 ,data=trainM.df)
+lda.fit
+plot(lda.fit)
+lda.pred=predict(lda.fit,validM.df )
+names(lda.pred)
+lda.class=lda.pred$class
+table(lda.class,validM.df$RealIn)
+print((8+92)/(26+92+8+27))
+print(A0<-(8/(8+27)))
+print(A1<-(212)/(33+212))
+```
+
+
+
+
+
+
+```{r}
+# Port
+#Step 2, predict G3
+#Model 1: Fitting Regression Trees to predict G3
+library(MASS)
+library(tree)
+set.seed(1)
+ # train = sample(1:nrow(portuguese), nrow(portuguese)/2)
+tree1.P=tree(G3~as.factor(school)+as.factor(sex)+as.factor(address)+as.factor(famsize)+as.factor(Pstatus)+as.factor(Medu)+as.factor(Fedu)+as.factor(Mjob)+as.factor(Fjob)+as.factor(Pstatus)+as.factor(reason)+as.factor(guardian)+traveltime+studytime+failures+as.factor(schoolsup)+as.factor(famsup)+as.factor(paid)+as.factor(activities)+as.factor(nursery)+as.factor(higher)+as.factor(internet)+as.factor(romantic)+as.factor(famrel)+freetime+goout+Dalc+Walc+health+absences+G1+G2,portuguese,subset=train)
+summary(tree1.P)
+plot(tree1.P)
+text(tree1.P,pretty=0)
+#We can see G1 G2 are most important factors. We want to first drop these two grade factors and examine the importance of other factors.
+tree2.P=tree(G3~as.factor(school)+as.factor(sex)+as.factor(address)+as.factor(famsize)+as.factor(Pstatus)+as.factor(Medu)+as.factor(Fedu)+as.factor(Mjob)+as.factor(Fjob)+as.factor(Pstatus)+as.factor(reason)+as.factor(guardian)+traveltime+studytime+failures+as.factor(schoolsup)+as.factor(famsup)+as.factor(paid)+as.factor(activities)+as.factor(nursery)+as.factor(higher)+as.factor(internet)+as.factor(romantic)+as.factor(famrel)+freetime+goout+Dalc+Walc+health+absences,portuguese,subset=train)
+summary(tree2.P)
+plot(tree2.P)
+text(tree2.P,pretty=0)
+cv.P=cv.tree(tree2.P)
+summary(cv.P)
+prune.P=prune.tree(tree2.P,best=5)
+plot(prune.P)
+text(prune.P,pretty=0)
+yhat=predict(tree2.P,newdata=portuguese[-train,])
+P.test<-portuguese[-train,"G3"]
+print(MSETree<-mean((yhat-P.test)^2))
+```
+
+```{r}
+# Math
+#Model 1: Fitting Regression Trees to predict G3
+train = sample(1:nrow(math), nrow(math)/2)
+tree1.P=tree(G3~as.factor(school)+as.factor(sex)+as.factor(address)+as.factor(famsize)+as.factor(Pstatus)+as.factor(Medu)+as.factor(Fedu)+as.factor(Mjob)+as.factor(Fjob)+as.factor(Pstatus)+as.factor(reason)+as.factor(guardian)+traveltime+studytime+failures+as.factor(schoolsup)+as.factor(famsup)+as.factor(paid)+as.factor(activities)+as.factor(nursery)+as.factor(higher)+as.factor(internet)+as.factor(romantic)+as.factor(famrel)+freetime+goout+Dalc+Walc+health+absences+G1+G2,math,subset=train)
+summary(tree1.P)
+plot(tree1.P)
+text(tree1.P,pretty=0)
+#We can see G1 G2 are most important factors. We want to first drop these two grade factors and examine the importance of other factors.
+tree2.P=tree(G3~as.factor(school)+as.factor(sex)+as.factor(address)+as.factor(famsize)+as.factor(Pstatus)+as.factor(Medu)+as.factor(Fedu)+as.factor(Mjob)+as.factor(Fjob)+as.factor(Pstatus)+as.factor(reason)+as.factor(guardian)+traveltime+studytime+failures+as.factor(schoolsup)+as.factor(famsup)+as.factor(paid)+as.factor(activities)+as.factor(nursery)+as.factor(higher)+as.factor(internet)+as.factor(romantic)+as.factor(famrel)+freetime+goout+Dalc+Walc+health+absences,math,subset=train)
+summary(tree2.P)
+plot(tree2.P)
+text(tree2.P,pretty=0)
+cv.P=cv.tree(tree2.P)
+summary(cv.P)
+prune.P=prune.tree(tree2.P,best=5)
+plot(prune.P)
+text(prune.P,pretty=0)
+yhat=predict(tree2.P,newdata=portuguese[-train,])
+P.test<-portuguese[-train,"G3"]
+print(MSETree<-mean((yhat-P.test)^2))
+```
+
+```{r}
+# step 2, predict G3
+#Model 2 Lasso, Lasso to predict G3
+portuguese<-na.omit(portuguese)
+x=model.matrix(G3~as.factor(school)+as.factor(sex)+as.factor(address)+as.factor(famsize)+as.factor(Pstatus)+as.factor(Medu)+as.factor(Fedu)+as.factor(Mjob)+as.factor(Fjob)+as.factor(Pstatus)+as.factor(reason)+as.factor(guardian)+traveltime+studytime+failures+as.factor(schoolsup)+as.factor(famsup)+as.factor(paid)+as.factor(activities)+as.factor(nursery)+as.factor(higher)+as.factor(internet)+as.factor(romantic)+as.factor(famrel)+freetime+goout+Dalc+Walc+health+absences,portuguese)[,-portuguese$G3]
+y=portuguese$G3
+train=sample(1:nrow(x), nrow(x)/2)
+test=(-train)
+y.test=y[test]
+library(glmnet)
+grid=10^seq(10,-2,length=100)
+lasso.mod=glmnet(x[train,],y[train],alpha=4,lambda=grid)
+plot(lasso.mod)
+set.seed(1)
+cv.out=cv.glmnet(x[train,],y[train],alpha=1)
+plot(cv.out)
+bestlam=cv.out$lambda.min
+lasso.pred=predict(lasso.mod,s=bestlam,newx=x[test,])
+print(LassoMSE<-mean((lasso.pred-y.test)^2))
+out=glmnet(x,y,alpha=1,lambda=grid)
+lasso.coef=predict(out,type="coefficients",s=bestlam)[1:20,]
+lasso.coef
+lasso.coef[lasso.coef=0]
+lasso.coef[lasso.coef!=0]
+```
+```{r}
+math<-na.omit(math)
+x=model.matrix(G3~as.factor(school)+as.factor(sex)+as.factor(address)+as.factor(famsize)+as.factor(Pstatus)+as.factor(Medu)+as.factor(Fedu)+as.factor(Mjob)+as.factor(Fjob)+as.factor(Pstatus)+as.factor(reason)+as.factor(guardian)+traveltime+studytime+failures+as.factor(schoolsup)+as.factor(famsup)+as.factor(paid)+as.factor(activities)+as.factor(nursery)+as.factor(higher)+as.factor(internet)+as.factor(romantic)+as.factor(famrel)+freetime+goout+Dalc+Walc+health+absences,math)[,-math$G3]
+y=math$G3
+train=sample(1:nrow(x), nrow(x)/2)
+test=(-train)
+y.test=y[test]
+library(glmnet)
+grid=10^seq(10,-2,length=100)
+lasso.mod=glmnet(x[train,],y[train],alpha=4,lambda=grid)
+plot(lasso.mod)
+set.seed(1)
+cv.out=cv.glmnet(x[train,],y[train],alpha=1)
+plot(cv.out)
+bestlam=cv.out$lambda.min
+lasso.pred=predict(lasso.mod,s=bestlam,newx=x[test,])
+print(LassoMSE<-mean((lasso.pred-y.test)^2))
+out=glmnet(x,y,alpha=1,lambda=grid)
+lasso.coef=predict(out,type="coefficients",s=bestlam)[1:20,]
+lasso.coef
+lasso.coef[lasso.coef=0.000000000]
+lasso.coef[lasso.coef!=0]
+```
+
+```{r}
+# Step 2, predict G3
+# Model 3: Boosting to predict G3
+library(gbm)
+set.seed(1)
+ boost.P=gbm(G3~factor(sex)+age+factor(address)+factor(famsize)+factor(Pstatus)+Medu+Fedu+factor(Mjob)+factor(Fjob)+factor(reason)+factor(guardian)+traveltime+studytime+failures+factor(schoolsup)+factor(famsup)+factor(paid)+factor(activities)+factor(nursery)+factor(higher)+factor(internet)+factor(romantic)+famrel+freetime+goout+Dalc+Walc+health+absences,data=portuguese[train,],distribution="gaussian",n.trees=200,interaction.depth=4)
+summary(boost.P)
+yhat.boost=predict(boost.P,newdata=portuguese[-train,],n.trees=200)
+print(MSEBoost<-mean((yhat.boost-P.test)^2))
+```
+
+```{r}
+#Math
+# Step 2, predict G3
+# Model 3: Boosting to predict G3
+library(gbm)
+set.seed(1)
+ boost.P=gbm(G3~factor(sex)+age+factor(address)+factor(famsize)+factor(Pstatus)+Medu+Fedu+factor(Mjob)+factor(Fjob)+factor(reason)+factor(guardian)+traveltime+studytime+failures+factor(schoolsup)+factor(famsup)+factor(paid)+factor(activities)+factor(nursery)+factor(higher)+factor(internet)+factor(romantic)+famrel+freetime+goout+Dalc+Walc+health+absences,data=math[train,],distribution="gaussian",n.trees=200,interaction.depth=4)
+summary(boost.P)
+yhat.boost=predict(boost.P,newdata=math[-train,],n.trees=200)
+print(MSEMBoost<-mean((yhat.boost-P.test)^2))
+```
+
+# Cluster
+```{r}
+# Cluster for math, family condition
+library(readxl)
+FM <- read_excel("family condition cluster, math.xlsx")
+FM<-na.omit(FM)
+#View(U)
+#print(sum(ifelse(is.finite(U)==TRUE,1,0)))
+#U<-na.omit(U)
+d <- dist(FM, method = "euclidean")
+fit <- hclust(d, method="ward.D")
+ # plot(fit)
+ # rect.hclust(fit, k=4, border="red")
+library(ape)
+ plot(as.phylo(fit), type = "fan")
+```
+
+```{r}
+# Cluster for math, student condition
+library(readxl)
+SM <- math_student_condition <- read_excel("math, student condition.xlsx")
+SM<-na.omit(SM)
+#View(U)
+#print(sum(ifelse(is.finite(U)==TRUE,1,0)))
+#U<-na.omit(U)
+d <- dist(SM, method = "euclidean")
+fit <- hclust(d, method="ward.D")
+  plot(fit)
+  rect.hclust(fit, k=4, border="red")
+library(ape)
+ plot(as.phylo(fit), type = "fan")
+```
+```{r}
+# Cluster for port, family condition
+FP <- read_excel("port, family condition.xlsx")
+FP<-na.omit(FP)
+d <- dist(FP, method = "euclidean")
+fit <- hclust(d, method="ward.D")
+ plot(fit, xlab="port, family condition")
+ rect.hclust(fit, k=4, border="red")
+```
+```{r}
+# Cluster for port, student condition
+SP <- read_excel("port, student condition.xlsx")
+SP<-na.omit(SP)
+#View(U)
+#print(sum(ifelse(is.finite(U)==TRUE,1,0)))
+#U<-na.omit(U)
+d <- dist(SP, method = "euclidean")
+fit <- hclust(d, method="ward.D")
+  plot(fit, xlab="port, student condition")
+  rect.hclust(fit, k=5, border="red")
+```
+
+5. Conclusions and Discussion (3%)
+Describe your conclusions; interpret the results, predictions you made, the models and their characteristics, and a give summary of what changed as you went through the project (data, analysis, model choices, etc.), what you would do next, or do differently in a subsequent exploration. Min. 1 page text + graphics (optional).
+References ??? websites, papers, packages, data refs, etc. should be included at the end. Include your R scripts! (e.g. in a zip file).
+
+
+The final document should be a minimum of 10 pages of writing (but can be more). All graphics should be within your written assignment unless they are very large. Large graphics files ??? a link to an online location is acceptable (e.g. Box, Dropbox, Google Drive).
